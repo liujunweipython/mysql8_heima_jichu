@@ -546,7 +546,7 @@ delete from 表名 [where 条件];
 
 ### 4.2实操
 
-![1649411490(1)](C:\Users\liuju\Desktop\黑马-MySQL5.6\tupian\1649411490(1).jpg)
+![1649411490(1)](https://raw.githubusercontent.com/liujunweipython/tuchuang/main/img/1649411490(1).jpg)
 
 ```MySQL
 #要求1：删除gender为女的员工

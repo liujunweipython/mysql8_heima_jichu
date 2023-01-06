@@ -771,7 +771,7 @@ select * from emp where idcard like '%x';
 | avg   | 平均值   |
 | sum   | 求和     |
 
-#### 2.4.2语法
+#### 2.4.2聚合语法
 
 ```mysql
 select 聚合函数(字段列表) from 表名;
@@ -799,7 +799,7 @@ select sum(age) from emp where workaddress='西安';
 
 ### 2.5DQL-group by分组查询
 
-#### 2.51语法
+#### 2.51分组语法
 
 ```
 select 字段列表 from 表名 [where 条件] group by 分组字段名 [having] 分组后过滤条件;
@@ -824,21 +824,21 @@ select avg(age) from emp group by gender;
 
 查询年龄小于45的员工，并根据工作地址分组，获取员工数量大于等于3的工作地址
 select workaddress,count(workaddress) from emp where age<45 group by workaddress having count(workaddress)>=3;
-学到这里
 ```
 
 ### 2.6DQL-order by排序查询
 
-#### 2.61语法
+#### 2.61排序语法
 
 ```mysql
-select 字段列表 from 表名 order by 字段1 排序方式1，字段2 排序方式2;
+select 字段列表 from 表名 order by 字段1 排序方式1，字段2 排序方式2;  #多字段排序规则：如果第一个字段相同，则按照第二个字段排序
+
 排序方式：
 asc：升序（默认值）
 desc：降序
 ```
 
-==注意：如果是多个字段排序，当第一个字段值相同时，才会根据第二个字段进行排序==
+**==注意：如果是多个字段排序，当第一个字段值相同时，才会根据第二个字段进行排序==**
 
 #### 2.62DQL-案例排序查询
 
@@ -855,17 +855,16 @@ select name,gender,age,entrydate from emp order by age asc,entrydate desc ;
 
 ### 2.7limit分页查询
 
-#### 2.71语法
+#### 2.71分页语法
 
 ```mysql 
 select 字段列表 from 表名 limit 起始索引，查询记录数;
-
 ```
 
 ==注意：==
 
-- ==起始索引从0开始，查询页码的起始索引=(查询页码-1)*每页显示记录数==
-- 分页查询是数据库额方言，不同的数据库有不同的实现，MySQL中是limit
+- **起始索引从0开始，查询页码的起始索引=(查询页码-1)*每页显示记录数**
+- 分页查询是数据库的方言，不同的数据库有不同的地方，MySQL中是limit
 - 如果查询的是第一页数据，起始索引可以省略，直接简写为limit 10
 
 #### 2.72DQL-案例分页查询
@@ -883,7 +882,7 @@ select * from emp limit 10,10;
 
 ```mysql
 按照要求完成如下DQL语句编写
-1.查询年龄为20，21，22，23岁的员工信息
+1.查询年龄为20，21，22，23岁的女性员工信息
 select id,workno,name,gender,age,idcard,workaddress,entrydate from emp where gender='女' and age in (20,21,22,23);
 
 2.查询性别为男，并且年龄在20-40岁（含）以内的姓名为三个字的员工。
@@ -896,8 +895,9 @@ select gender, count(gender) from emp where age<60 group by gender;
 select  name,age from emp where age<=35 order by age asc ,entrydate desc;
 
 
-5.查询性别为男，且年龄在20-40（含）以内的前5个员工信息，对查询的结果按照年龄升序排序，年龄相同按照入职时间升序排序
+5.查询性别为男，且年龄在20-40（含）以内的前5个员工信息，对查询的结果按照年龄升序排序，年龄相同按照入职时间升序排序 ##前五个员工就是每页5条数据库，查第一页，所以是limit 0 5; (0可以省略)
 select * from emp where gender='男' and age between 20 and 40 order by age asc ,entrydate desc limit 5
+学到这里
 ```
 
 ### 2.9DQL语句执行顺序

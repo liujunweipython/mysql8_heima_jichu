@@ -461,7 +461,7 @@ drop table 表名 #删除表
 
 # 四、MySQL图形化界面
 
-![image-20220225174737756](C:\Users\liuju\Desktop\黑马-MySQL5.6\tupian\image-20220225174737756.png)
+![image-20220225174737756](https://raw.githubusercontent.com/liujunweipython/tuchuang/main/img/image-20220225174737756.png)
 
 # 五、DML-数据操作语言
 
@@ -897,7 +897,6 @@ select  name,age from emp where age<=35 order by age asc ,entrydate desc;
 
 5.查询性别为男，且年龄在20-40（含）以内的前5个员工信息，对查询的结果按照年龄升序排序，年龄相同按照入职时间升序排序 ##前五个员工就是每页5条数据库，查第一页，所以是limit 0 5; (0可以省略)
 select * from emp where gender='男' and age between 20 and 40 order by age asc ,entrydate desc limit 5
-学到这里
 ```
 
 ### 2.9DQL语句执行顺序
@@ -914,11 +913,11 @@ select * from emp where gender='男' and age between 20 and 40 order by age asc 
 
 ⑥：最后执行limit分页
 
-![image-20220413153508923](C:\Users\liuju\Desktop\黑马-MySQL5.6\tupian\image-20220413153508923.png)
+![image-20220413153508923](https://raw.githubusercontent.com/liujunweipython/tuchuang/main/img/image-20220413153508923.png)
 
 ### 2.10DQL语句总结
 
-![1649901212(1)](C:\Users\liuju\Desktop\黑马-MySQL5.6\tupian\1649901212(1).jpg)
+![1649901212(1)](https://raw.githubusercontent.com/liujunweipython/tuchuang/main/img/1649901212(1).jpg)
 
 # 七、DCL-数据控制语言
 
@@ -981,7 +980,7 @@ alter user 'heima'@'%' identified with mysql_native_password by '1234';
 drop user '用户名'@'主机名';
 
 案例：删除itcast@localhost 用户
-drop 'itcast'@'localhost';
+drop  user 'itcast'@'localhost';
 ```
 
 ### 3.DCL-用户权限控制

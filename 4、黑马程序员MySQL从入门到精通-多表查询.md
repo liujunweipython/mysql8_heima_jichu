@@ -11,580 +11,292 @@
    关系：一个部门对应多个员工，一个员工对应一个部门
    实现：在多的一方建立外键，指向一的那一方的主键
    ![image-20230113144847789](https://raw.githubusercontent.com/liujunweipython/tuchuang/main/img/image-20230113144847789.png)
+
 2. 多对多
    案例：学生和课程的关系
    关系：一个学生可以选修多门课程，一门课程也可以供多个学生选择
    实现：建立第三张中间表，中间表至少包含两个外键，分别关联两方主键
    ![image-20230113151615514](https://raw.githubusercontent.com/liujunweipython/tuchuang/main/img/image-20230113151615514.png)
+
 3. 一对一
+   案例：用户 与 用户详情的关系
+
+   关系：一对一关系，多用于单表拆分，将一张表的基础字段放在一张表中，其他详情字段放在另一张表中，以提升操作效率。
+
+   实现：在任意一方加入外键，关联另一方的主键，并且设置外键为唯一的约束（unique）
+   ![image-20230117172140817](https://raw.githubusercontent.com/liujunweipython/tuchuang/main/img/image-20230117172140817.png)
+
+   ```MySQL
+   # 一对一操作
+   create table tb_user(
+       id int primary key auto_increment comment '主键id',
+       name varchar(10) comment '姓名',
+       age int comment '年龄',
+       gender char(1) comment '1:男 ， 2:女',
+       phone char(11) comment '手机号'
+   ) comment '用户基本信息表';
+   
+   
+   create table tb_user_edu(
+       id int primary key auto_increment comment '主键id',
+       degree varchar(20) comment '学历',
+       major varchar(50) comment '专业',
+       primaryschool varchar(50) comment '小学',
+       middleschool varchar(50) comment '中学',
+       university varchar(50) comment '大学',
+       userid int unique comment '用户id',
+       constraint fk_userid foreign key (userid) references tb_user(id)
+   ) comment '用户教育信息表';
+   
+   
+   #向用户基本信息表中插入数据
+   insert into tb_user(id, name, age, gender, phone) values (null,'黄渤',45,'1','18800001111'),
+                                                            (null,'冰冰',35,'1','18800002222'),
+                                                            (null,'码云',55,'1','18800008888'),
+                                                            (null,'李彦宏',50,'1','18800009999');
+   
+   #向用户教育信息表中插入数据
+   insert into tb_user_edu(id, degree, major, primaryschool, middleschool, university, userid)
+   VALUES
+          (null,'本科','舞蹈','静安区第一小学','静安区第一中学','北京舞蹈学院',1),
+          (null,'硕士','表演','朝阳区第一小学','朝阳区第一中学','北京电影学院',2),
+          (null,'本科','英语','杭州市第一小学','杭州市第一中学','杭州师范大学',3),
+          (null,'本科','应用数学','阳泉第一小学','静阳泉区第一中学','清华大学',4);
+   ```
+
    
 
 # 二、多表查询概述
 
-- SQL语句分类
+## 概述：
 
-  | 分类 | 全称                         | 说明                                                   | 关键字                                                       |
-  | ---- | ---------------------------- | ------------------------------------------------------ | ------------------------------------------------------------ |
-  | DDL  | Data Definition Language     | 数据定义语言，用来定义数据库对象(数据库，表，字段)     | create(创建)，drop（删除） ，truncate（删除表结构，再创一张表），alter（修改） |
-  | DML  | Data Manipulation Language   | 数据操作语言，用来对数据库表中的数据进行增删改         | insert（插入），update（更改），delete（删除）               |
-  | DQL  | Data Query Language          | 数据查询语言，用来查询数据库中表的记录                 | select                                                       |
-  | DCL  | Data Control Language        | 数据控制语言，用来创建数据库用户，控制数据库的访问权限 | grant，revoke,deny                                           |
-  | TCL  | Transaction Control Language | 事务控制语言，                                         | begin,savepoint,rollback,commit                              |
+多表查询：是指从多张表中查询数据
+笛卡尔积：笛卡尔乘积是指在教学中，两个集合中，A集合和B集合的所有组合情况（在多表查询中需要消除无效的笛卡尔积）
+![image-20230118134111216](https://raw.githubusercontent.com/liujunweipython/tuchuang/main/img/image-20230118134111216.png)
+
+## 多表查询演示
+
+```MySQL
+# 数据准备
+create table dept(
+    id   int auto_increment comment 'ID' primary key,
+    name varchar(50) not null comment '部门名称'
+)comment '部门表';
+
+
+create table emp(
+    id  int auto_increment comment 'ID' primary key,
+    name varchar(50) not null comment '姓名',
+    age  int comment '年龄',
+    job varchar(20) comment '职位',
+    salary int comment '薪资',
+    entrydate date comment '入职时间',
+    managerid int comment '直属领导ID',
+    dept_id int comment '部门ID'
+)comment '员工表';
+
+
+alter table emp add constraint fk_emp_dept_id foreign key (dept_id) references dept(id);
+
+insert into dept (id, name)
+VALUES
+       (null,'研发部'),
+       (null,'市场部'),
+       (null,'财务部'),
+       (null,'销售部'),
+       (null,'总经办'),
+       (null,'人事部');
+
+
+insert into emp (id, name, age, job, salary, entrydate, managerid, dept_id)
+values
+(2, '张无忌', 20, '项目经理',12500, '2005-12-05', 1,1),
+            (3, '杨逍', 33, '开发', 8400,'2000-11-03', 2,1),
+            (4, '韦一笑', 48, '开发',11000, '2002-02-05', 2,1),
+            (5, '常遇春', 43, '开发',10500, '2004-09-07', 3,1),
+            (6, '小昭', 19, '程序员鼓励师',6600, '2004-10-12', 2,1),
+            (7, '灭绝', 60, '财务总监',8500, '2002-09-12', 1,3),
+            (8, '周芷若', 19, '会计',48000, '2006-06-02', 7,3),
+            (9, '丁敏君', 23, '出纳',5250, '2009-05-13', 7,3),
+            (10, '赵敏', 20, '市场部总监',12500, '2004-10-12', 1,2),
+            (11, '鹿杖客', 56, '职员',3750, '2006-10-03', 10,2),
+            (12, '鹤笔翁', 19, '职员',3750, '2007-05-09', 10,2),
+            (13, '方东白', 19, '职员',5500, '2009-02-12', 10,2),
+            (14, '张三丰', 88, '销售总监',14000, '2004-10-12', 1,4),
+            (15, '俞莲舟', 38, '销售',4600, '2004-10-12', 14,4),
+            (16, '宋远桥', 40, '销售',4600, '2004-10-12', 14,4),
+            (17, '陈友谅', 42, null,2000, '2011-10-12', 1,null);
+            
+            
+操作：
+select * from emp,dept where dept.id=emp.dept_id;
+```
+
+- 多表查询分类：分为**连接查询** 和 **子查询**
+- 连接查询又分：内连接、外连接、自连接
+- 内连接：相当于查询A、B交集部分的数据
+- 外连接又分 **左外连接** 和 **右外连接**：
+  - 左外连接：查询左表所有数据，以及两张表交集部分的数据
+  - 右外连接：查询有表所有数据，以及两张表交集部分的数据
+- 自连接：当前表与自身的连接查询，自连接必须使用表别名
+- 子查询：
+
+![image-20230118135637487](https://raw.githubusercontent.com/liujunweipython/tuchuang/main/img/image-20230118135637487.png)
 
 # 三、内连接
 
-## 1.DDL-数据库操作
+## 1.连接查询-内连接
 
-### 1.1查询所有的数据库
+内连接是查询两张表交集的部分
 
-**①、查询所有数据库show databases;**
+C代表的绿色区域就是两张表的交集数据
 
-```mysql
-mysql> show databases;
-+--------------------+
-| Database           |
-+--------------------+
-| information_schema |
-| mysql              |
-| performance_schema |
-+--------------------+
-3 rows in set (0.00 sec)
-```
+![image-20230118140058203](https://raw.githubusercontent.com/liujunweipython/tuchuang/main/img/image-20230118140058203.png)
 
-**②、查询当前在使用哪个数据库 select database();    相当于pwd**
+### 1.1隐式内连接
+
+**①、语法**
 
 ```mysql
-mysql> select database();
-+------------+
-| database() |
-+------------+
-| mysql      |
-+------------+
-1 row in set (0.00 sec)
+select 字段列表 from 表名1,表名2 where 条件...;
 ```
 
-### 1.2.创建数据库
-
-**①、create database [if not exists] 数据库名 [default charset 字符集] [collate 排序规则];**   (中括号表示可选，如果不设置则使用默认的字符集和排序规则)
-
-创建数据库时建议使用utf8mb4，因为utf8只能存储三个字节，有些特殊字符占4个字符
+②案例演练
 
 ```MySQL
-语法：create database [if not exists] 数据库名 [default charset 字符集] [collate 排序规则];
-方括号中的选项为可选参数
-if not exists #表示如果不存在则创建
-default charset 字符集 # 创建库时设置库的字符集
-collate 排序规则 
+-- 1. 查询每一个员工的姓名 , 及关联的部门的名称 (隐式内连接实现)
+-- 表结构: emp , dept
+-- 连接条件: emp.dept_id = dept.id
+select emp.name,dept.name from emp,dept where emp.dept_id=dept.id;
 
-实操：
-mysql> create database itcast;  #创建itcast数据库
-Query OK, 1 row affected (0.01 sec)
-
-mysql> show databases;  #查询是否创建成功
-+--------------------+
-| Database           |
-+--------------------+
-| information_schema |
-| itcast             |
-| mysql              |
-| performance_schema |
-+--------------------+
-4 rows in set (0.00 sec)
-
-mysql> create database itcast; #如果创建的库存在则会报错，此时使用if not exists
-ERROR 1007 (HY000): Can't create database 'itcast'; database exists
-
-mysql> create database if not exists itcast;  #if not exists表示如果不存在就创建，存在则不创建
-Query OK, 1 row affected, 1 warning (0.00 sec)
-
-mysql> create database itheima default charset utf8mb4; #创建字符集是utf8mb4的itheima库
-Query OK, 1 row affected (0.00 sec)
+如果表名很长可以使用别名的方式（#一旦用了别名，就不能使用表名了）：
+select e.name,d.name from emp as e,dept as d where e.dept_id=d.id;
 ```
 
-### 1.3.删除
+
+
+### 1.2.显式内连接
+
+**①、语法**
+
+```mysql
+select 字段列表 from 表名1 inner join 表名2 on 条件...;
+```
+
+②案例演练
 
 ```MySQL
-语法：drop database [if exists] 数据库名;
-方括号中的选项为可选参数
-if exists #表示如果存在则删除
+-- 2. 查询每一个员工的姓名 , 及关联的部门的名称 (显式内连接实现)  --- INNER JOIN ... ON ...
+-- 表结构: emp , dept
+-- 连接条件: emp.dept_id = dept.id
+-- 关键字 inner可以省略
+select emp.name,dept.name from emp inner join dept on emp.dept_id = dept.id;
 
-实操：
-mysql> drop database if exists test;   #如果test库存在则删除，如果不存在不报错
-Query OK, 0 rows affected (0.00 sec)
+如果表名很长可以使用别名的方式（#一旦用了别名，就不能使用表名了）：
+select  e.name,d.name from emp as e inner join dept as d on e.dept_id = d.id;
 
-mysql> drop database test; #不加if not exists 参数去删除不存在的库会报错
-ERROR 1008 (HY000): Can't drop database 'test'; database doesn't exist
-mysql> show databases;   #查看test库已经不存在了
-+--------------------+
-| Database           |
-+--------------------+
-| information_schema |
-| itcast             |
-| itheima            |
-| mysql              |
-| performance_schema |
-+--------------------+
-5 rows in set (0.00 sec)
 ```
 
-### 1.4.使用某个数据库
+## 2.连接查询-外连接
+
+外连接查询包含 **左外连接** 和 **右外连接**
+
+### 2.1左外连接（常用）
+
+①、左外连接相当于查询表1(左表)的所有数据，包含表1和表2交集部门的数据
+
+```mysql 
+#关键字outer可以省略，案例中省略了
+select 字段列表 from 表1名 left [outer] join 表2名 on 条件...;	
+```
+
+②、案例演练
 
 ```mysql
-语法：use 数据库名;    相当于cd到某个路径
-实操：
-mysql> use itcast;  #选择要使用的数据库
-Database changed
-
-mysql> select database(); #查看当前所在的库
-+------------+
-| database() |
-+------------+
-| itcast     |
-+------------+
-1 row in set (0.00 sec)
-```
-
-## 2.DDL-表操作-查询
-
-### 2.1查询当前数据库所有表
-
-```mysql
-语法：show tables; 前提是要先进入到这个库，使用use指令
-mysql> use mysql;   先选择库
-Database changed
-
-mysql> show tables;   在查看库中所有的表
-+---------------------------+
-| Tables_in_mysql           |
-+---------------------------+
-| columns_priv              |
-| db                        |
-| event                     |
-| func                      |
-| general_log               |
-| help_category             |
-| help_keyword              |
-| help_relation             |
-| help_topic                |
-| innodb_index_stats        |
-| innodb_table_stats        |
-| ndb_binlog_index          |
-| plugin                    |
-| proc                      |
-| procs_priv                |
-| proxies_priv              |
-| servers                   |
-| slave_master_info         |
-| slave_relay_log_info      |
-| slave_worker_info         |
-| slow_log                  |
-| tables_priv               |
-| time_zone                 |
-| time_zone_leap_second     |
-| time_zone_name            |
-| time_zone_transition      |
-| time_zone_transition_type |
-| user                      |
-+---------------------------+
-28 rows in set (0.00 sec)
-
+-- 1. 查询emp表的所有数据, 和对应的部门信息(左外连接)
+-- 表结构: emp, dept
+-- 连接条件: emp.dept_id = dept.id
+select e.*,d.name from emp as e left join dept as d on e.dept_id = d.id;
 ```
 
 
 
-### 2.2查询表结构
+### 2.2右外连接（用的少）
 
-```mysql
-语法：desc 表名; 
-
-查询tb_user表的结构
-mysql> desc tb_user;  
-+--------+-------------+------+-----+---------+-------+
-| Field  | Type        | Null | Key | Default | Extra |
-+--------+-------------+------+-----+---------+-------+
-| id     | int(11)     | YES  |     | NULL    |       |
-| name   | varchar(50) | YES  |     | NULL    |       |
-| age    | int(11)     | YES  |     | NULL    |       |
-| gendet | varchar(1)  | YES  |     | NULL    |       |
-+--------+-------------+------+-----+---------+-------+
-4 rows in set (0.00 sec)
-```
-
-
-
-### 2.3查询指定表的创建表语句
-
-```mysql
-语法：show create table 表名;
-
-mysql> show create table tb_user;
-+---------+--------------------------------------------------------------------------------------------------------+
-| Table   | Create Table                                                                 --------------------------+
-| tb_user | CREATE TABLE `tb_user` (
-  `id` int(11) DEFAULT NULL COMMENT '编号',
-  `name` varchar(50) DEFAULT NULL COMMENT '姓名',
-  `age` int(11) DEFAULT NULL COMMENT '年龄',
-  `gendet` varchar(1) DEFAULT NULL COMMENT '性别'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='用户表'            |
-+---------+--------------------------------------------------------------------------------------------------------+
-1 row in set (0.01 sec)
-```
-
-## 3.DDL-表操作-创建
-
-#### 3.1表创建语法
-
-```mysql
-注意：[...]为可选参数，最后一个字段后面没有逗号
-create table 表明(
-	字段1 字段1类型[comment 字段1注释],
-	字段2 字段2类型[comment 字段2注释],
-	字段3 字段3类型[comment 字段3注释],
-	....
-	字段n 字段n类型[comment 字段n注释]
-)[comment 表注释];
-```
-
-![image-20220225143451655](https://raw.githubusercontent.com/liujunweipython/tuchuang/main/imgimage-20220225143451655.png)
-
-```mysql
-实操：
-mysql> create table tb_user(
-    -> id int comment '编号',
-    -> name varchar(50) comment '姓名',
-    -> age int comment '年龄',
-    -> gendet varchar(1) comment '性别'
-    -> ) comment '用户表';
-Query OK, 0 rows affected (0.07 sec)
-
-mysql> show tables;
-+------------------+
-| Tables_in_itcast |
-+------------------+
-| tb_user          |
-+------------------+
-1 row in set (0.00 sec)
-```
-
-## 4.DDL-表操作-数据类型
-
-### 4.1MySQL的数据类型
-
-MySQL中支持的数据类型有很多，主要分为三类：数值类型、字符串类型、日期时间类型
-
-参考：https://www.runoob.com/mysql/mysql-data-types.html
-
-#### 4.11数值类型
-
-有符号标识允许出现负数，无符号标识不允许出现符号
-
-![image-20220225153552789](https://raw.githubusercontent.com/liujunweipython/tuchuang/main/imgimage-20220225153552789.png)
-
-```mysql
-案例：
-年龄：age int 或者 age tinyint unsigend   # 表示取值范围在0到255之间
-分数：score double(4,1) #100.0这个成绩中4表示最长4位，1表示只允许出现1位小数
-```
-
-
-
-#### 4.12字符串类型
-
-视频、音频、安装包属于二进制数据，这些是可以存储在MySQL中的，实际上并不建议这样做，会有专门的文件服务器存储
-
-![image-20220225160052475](https://raw.githubusercontent.com/liujunweipython/tuchuang/main/imgimage-20220225160052475.png)
-
-```mysql
-char和varchar类型后面都要指定最大长度
-cahr(10)  #最多支持10个字符，超出会报错，如果少于10个也会占用10个字符的空间，性能好
-varchar(10) #最多支持10个字符，超出会报错，根据实际情况占用相应的空间，性能较差，因为要计算实际使用空间
-案例：
-用户名 ：username varchar(50)  #
-性别：gender char(1)
-```
-
-#### 4.13日期时间类型
-
-![image-20220225161515224](https://raw.githubusercontent.com/liujunweipython/tuchuang/main/imgimage-20220225161515224.png)
-
-```mysql
-案例：
-生日：birthday date
-```
-
-### 4.2案例:根据需求创建表(设计合理的数据类型、长度)
-
-设计一张员工表，要求如下：
-
-1. 编号（纯数字）
-2. 员工工号（字符串类型，长度不超过10位）
-3. 员工姓名（字符串类型，长度不超过100位）
-4. 性别（男/女，存储一个汉字）
-5. 年龄（正常人年龄，不可存储负数）
-6. 身份证号（二代身份证号均为18位，身份证中有X这样的字符）
-7. 入职时间（取年月日即可）
-
-```powershell
-mysql> create table emp(
-id int  comment '编号',
-work_num varchar(10)  comment '工号',
-name varchar(10)  comment '姓名',
-gender char(1)  comment '性别',
-age tinyint unsigned  comment '年龄',
-id_card char(18) comment '身份证',
-entry_time date comment '入职时间'
-)comment '员工表';
-
-注意：如果想要修改表中字段的类型或者新增某个字段，见4.3DDL-表操作-修改
-```
-
-### 4.3DDL-表操作
-
-#### 4.31表中添加字段
-
-```powershell
-语法：alter table 表名 add 字段名 类型(长度) [comment 注释] [约束];  #方括号都是可选参数
-
-案例：为emp表增加一个新的字段"昵称"为nickname，类型为varchar(20)
-mysql> alter table emp add  nickname varchar(20) comment '昵称';
-```
-
-#### 4.32修改表中字段
-
-```powershell
-语法1：修改某一字段的类型
-alter table 表名 modify 要修改类型的字段名 字段的新类型(长度);
-
-语法2：修改字段名和字段类型
-alter table 表名 change 旧字段名 新字段名 新字段名的类型(长度) [comment '注释'] [约束];
-
-案例：
-将emp表的nickname字段修改为username，类型为varchar(30)
-mysql> alter table emp change nickname username varchar(30) comment '用户名';
-mysql> desc emp; #检查是否修改成功
-+------------+---------------------+------+-----+---------+-------+
-| Field      | Type                | Null | Key | Default | Extra |
-+------------+---------------------+------+-----+---------+-------+
-| id         | int(11)             | YES  |     | NULL    |       |
-| work_num   | varchar(10)         | YES  |     | NULL    |       |
-| name       | varchar(10)         | YES  |     | NULL    |       |
-| gender     | char(1)             | YES  |     | NULL    |       |
-| age        | tinyint(3) unsigned | YES  |     | NULL    |       |
-| id_card    | char(18)            | YES  |     | NULL    |       |
-| entry_time | date                | YES  |     | NULL    |       |
-| username   | varchar(30)         | YES  |     | NULL    |       |
-+------------+---------------------+------+-----+---------+-------+
-8 rows in set (0.00 sec)
-```
-
-#### 4.33删除表中字段
-
-```powershell
-语法：删除字段 # 这一列字段有数据也会一起被删除
-alter table 表名 drop 字段名;
-
-案例：将emp表中的username字段删除
-mysql> alter table emp drop username;
-Query OK, 0 rows affected (0.01 sec)
-Records: 0  Duplicates: 0  Warnings: 0
-
-mysql> desc emp; #检查是否删除成功
-+------------+---------------------+------+-----+---------+-------+
-| Field      | Type                | Null | Key | Default | Extra |
-+------------+---------------------+------+-----+---------+-------+
-| id         | int(11)             | YES  |     | NULL    |       |
-| work_num   | varchar(10)         | YES  |     | NULL    |       |
-| name       | varchar(10)         | YES  |     | NULL    |       |
-| gender     | char(1)             | YES  |     | NULL    |       |
-| age        | tinyint(3) unsigned | YES  |     | NULL    |       |
-| id_card    | char(18)            | YES  |     | NULL    |       |
-| entry_time | date                | YES  |     | NULL    |       |
-+------------+---------------------+------+-----+---------+-------+
-7 rows in set (0.00 sec)
-```
-
-#### 4.34修改表名
-
-```powershell
-语法：修改表名
-alter table 旧表名 rename to 新表名;
-
-案例：将emp表的表名修改为employee
-mysql> alter table emp rename to employee;
-Query OK, 0 rows affected (0.01 sec)
-
-mysql> show tables; #查看表名是否修改成功
-+------------------+
-| Tables_in_itcast |
-+------------------+
-| employee         |
-| tb_user          |
-+------------------+
-2 rows in set (0.00 sec)
-```
-
-#### 4.35删除表
-
-```powershell
-语法1：删除表 ，直接删除表和表中数据
-drop table [if exists] 表名;
-
-案例：将tb_user表删除
-mysql> drop table tb_user;
-Query OK, 0 rows affected (0.01 sec)
-
-语法2：删除指定表，并重新创建该表,该语法会删除表中的数据，然后重新创建该表(了解) #删除表中数据，保留表结构
-truncate table 表名;  
-
-注意：在删除表时，表中的数据也会全部被删除
-```
-
-## 5.DDL语句总结
-
-### 5.1DDL-数据库操作
-
-```powershell
-show databases;   #显示所有的数据库
-create database 数据库名;  #创建新的数据库
-use 数据库名;  #切换到某个库，要使用这个库
-select database(); #查看当前所在的库
-drop database 数据库名;  #删除某个数据库
-```
-
-### 5.2DDL-表操作
-
-```powershell
-show tables; #显示所有表
-create table 表名(字段1 字段1类型,字段2 字段2类型); #创建表并定义字段,字段之间逗号分隔，最后一个字段不加逗号
-desc 表名; #查看表中的字段
-show create table 表名; # 查看创建表示的语句
-alter table 表名 add/modify/change/drop/rename to ... ; #更新表的字段
-参数：
-add 新增字段
-modify 修改字段的类型
-change 修改某个字段名称和这个字段的类型
-drop 删除某个字段
-rename to 修改表名
-
-drop table 表名 #删除表
-```
-
-# 四、外连接
-
-![image-20220225174737756](https://raw.githubusercontent.com/liujunweipython/tuchuang/main/img/image-20220225174737756.png)
-
-# 五、自连接
-
-## 1.DML-介绍
-
-DML英文全称是Data Manipulation Lanageuage(数据操作语言)，用来对数据库表中的数据记录进行增删改操作（操作表中的数据）。
-
-添加数据（insert）
-
-修改数据（update）
-
-删除数据（delete）
-
-## 2.DML-添加数据-insert
-
-### 2.1 添加数据语法
-
-```mysql
-# 给指定字段添加数据，8个字段可以只设置其中的5个字段的数据
-insert into 表名 (字段名1,字段名2,字段名3,...) values(值1,值2,值3,...);
-
-#给全部字段添加数据
-insert into 表名 values(值1,值2,值3,...);   #值要跟字段一一对应
-
-#批量添加数据
-insert into 表名 (字段名1,字段名2,字段名3,...) values(值1,值2,值3,...),(值1,值2,值3,...);
-insert into 表名 values(值1,值2,值3,...),(值1,值2,值3,...);   #值要跟字段一一对应
-
-#注意#
-插入数据时，指定的字段顺序需要与值的顺序是一一对应的。
-字符串和日期型数据应该包含在引号中。
-插入的数据大小，应该在字段的规定范围内。
-```
-
-### 2.2实操
-
-```mysql
-# 给指定字段添加数据
-insert into employee(id, wokrno, gender, age, idcard, entrydate, name) values(1,'1','男',10,'370687199408250931','2000-01-01','itcast'); 
-
-#给全部字段添加数据
-insert into employee values(2,'2','男',18,'370687198808250931','2005-01-01','张无忌');
-
-#批量添加多条数据
-insert into employee values(3,'3','男',38,'370687198808250925','2005-01-01','韦一笑'),(4,'4','女',18,'370687198808251431','2005-01-01','赵敏');
-```
-
-## 3.DML-修改数据-update
-
-### 3.1修改数据语法
-
-```mysql
-update 表名 set 字段1=值1,字段2=值2,... [where 条件];
-#修改语句的条件可以有，也可以没有，如果没有条件，则会修改整张表的所有数据。
-```
-
-### 3.2实操
-
-![1649411490(1)](https://raw.githubusercontent.com/liujunweipython/tuchuang/main/img1649411490(1).jpg)
-
-```mysql
-要求1：修改id为1的数据，将name修改为itheima
-update employee set name='itheima' where id=1;
-
-要求2：修改id为1，将name修改为小昭，gender修改为女
-update employee set name='小昭',gender='女' where id=1;
-
-要求3：将所有的员工入职日期修改为2008-01-01
-update employee set entrydate='2008-01-01';
-```
-
-## 4.DML-删除数据-delete
-
-### 4.1删除数据语法
-
-```mysql
-delete from 表名 [where 条件];
-注意：
-#delete语句的条件可以有，也可以没有，有条件则删除符合条件的数据，没有条件，则会删除整张表的所有数据。
-#delete 语句不能删除某一个字段的值（如果要删除某一个字段的值，可以使用update将这个字段的值设为空）。
-```
-
-### 4.2实操
-
-![1649411490(1)](https://raw.githubusercontent.com/liujunweipython/tuchuang/main/img/1649411490(1).jpg)
+①、相当于查询表2(右表)的所有数据，包含表1和表2交集部门的数据
 
 ```MySQL
-#要求1：删除gender为女的员工
-delete from employee where gender='女';
-
-#要求2：删除所有员工(删除表中所有数据，但是不删除表)
-方法一：delete from employee;
-方法二：truncate table employee;
+select 字段列表 from 表1名 right [outer] join 表2名 on 条件...;	
 ```
 
-## 5.DML-语句总结
+②、案例演练
 
-### 5.1添加数据
+```mysql
+-- 2. 查询dept表的所有数据, 和对应的员工信息(右外连接)
+
+select d.*, e.* from emp e right outer join dept d on e.dept_id = d.id;
+
+select d.*, e.* from dept d left outer join emp e on e.dept_id = d.id;
+```
+
+![image-20230118151855609](https://raw.githubusercontent.com/liujunweipython/tuchuang/main/img/image-20230118151855609.png)
+
+## 3.自连接
+
+**自连接查询，可以是内连接查询，也可以是外连接查询，自连接必须起别名**
+
+### 3.1自连接语法
+
+①、语法
+
+```mysql
+select 字段里列表 from 表A as 别名A join 表A as 别名B on 条件...;
+```
+
+②、案例演练
+
+```mysql 
+-- 自连接
+-- 1. 查询员工 及其 所属领导的名字（#分析：领导也是员工，所以将emp表拆成两张表看，领导id(managerid)指向当前表的主键id）
+-- 自连接必须起别名
+select a.name,b.name from emp as a ,emp as b where a.managerid=b.id;（自连接可以是内连接）
+
+
+-- 2. 查询所有员工 emp 及其领导的名字 emp , 如果员工没有领导, 也需要查询出来
+select a.name as '员工',b.name as '领导' from emp as a left join emp as b on a.managerid=b.id; （自连接可以是外连接）
+```
+
+![image-20230118164955140](https://raw.githubusercontent.com/liujunweipython/tuchuang/main/img/image-20230118164955140.png)
+
+![image-20230118170006551](https://raw.githubusercontent.com/liujunweipython/tuchuang/main/img/image-20230118170006551.png)
+
+## 4.联合查询-union，union all
+
+对于union联合查询，就是把多次查询的结果合并起来，形成一个新的查询结果集
+
+### 4.1联合查询语法
+
+**union all是将查询的结果直接合并**
+
+**union是将查询的结果去重后合并**
+
+**对于联合查询的多张表的字段列数必须保持一致，字段类型也需要保持一致。**
+
+```mysql
+select 字段列表 from 表A ...
+union [all]
+select 字段列表 from 表B ...;
+```
+
+### 4.2联合查询案例
 
 ```MySQL
-insert into 表名 (字段1，字段2，...) values (字段1的值，字段2的值，...),(字段1的值，字段2的值，...);
-```
+-- 将薪资低于5000的员工，和 年龄大于50岁的员工全部查询出来
+#因为鹿杖客员工同时满足薪资低于5000，年龄大于50岁，所以使用union all是将查询结果直接合并，结果中有两条鹿杖客的数据，因此使用union可以去除重复的数据
 
-### 5.2修改数据
-
-```mysql
-update 表名 set 字段1=值1，字段2=值2 [where 条件];
-```
-
-### 5.3删除数据
-
-```mysql
-delete from 表名 [where 条件];
+select name,salary,age from emp where salary<5000
+union
+select  name,salary,age from emp where  age>50;
 ```
 
 # 六、子查询
